@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ML Diamond Store</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: scale(1.05);
+}
+
+button {
+    margin-top: 10px;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: #22c55e;
+    color: white;
+    cursor: pointer;
+}
+
+.cart {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    background: #1e293b;
+    padding: 15px;
+    width: 250px;
+    border-radius: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.checkout {
+    background: #3b82f6;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💎 Mobile Legends Diamond Store</h1>
+
+<div class="controls">
+    <input type="text" id="search" placeholder="Search...">
+    <select id="sort">
+        <option value="">Sort</option>
+        <option value="low">Price Low → High</option>
+        <option value="high">Price High → Low</option>
+    </select>
+</div>
+
+<div class="container" id="products"></div>
+
+<!-- CART -->
+<div class="cart">
+    <h3>🛒 Cart</h3>
+    <div id="cartItems"></div>
+    <p>Total: ₹ <span id="total">0</span></p>
+    <button class="checkout" onclick="checkout()">Checkout</button>
+</div>
+
+<!-- PAYMENT PAGE -->
+<div id="paymentPage" class="hidden">
+    <h2>💳 UPI Payment</h2>
+
+    <p><b>UPI ID:</b> 9366225131@fam</p>
+
+    <h3>Amount: ₹ <span id="payAmount"></span></h3>
+
+    <img src="qr.png" width="220" style="border-radius:10px;">
+
+    <br><br>
+
+    <a id="upiLink">
+        <button>📱 Pay via UPI App</button>
+    </a>
+
+    <p>After payment, send screenshot to confirm order.</p>
+
+    <button onclick="goBack()">⬅ Back</button>
+</div>
+
+<script>
+const products = [
+    {name:"10 Diamonds (9+1)", price:15.80},
+    {name:"28 Diamonds (25+3)", price:42.76},
+    {name:"54 Diamonds (50+4)", price:80.87},
+    {name:"110 Diamonds (100+10)", price:161.74},
+    {name:"148 Diamonds (134+14)", price:215.65},
+    {name:"170 Diamonds (154+16)", price:245.39},
+    {name:"222 Diamonds (200+22)", price:322.54},
+    {name:"296 Diamonds (256+40)", price:425.72},
+    {name:"408 Diamonds (367+41)", price:585.60},
+    {name:"568 Diamonds (503+65)", price:799.38},
+    {name:"875 Diamonds (774+101)", price:1225.10},
+    {name:"1136 Diamonds (1006+130)", price:1598.77}
+];
+
+let cart = [];
+
+const productDiv = document.getElementById("products");
+const cartDiv = document.getElementById("cartItems");
+const totalSpan = document.getElementById("total");
+const searchInput = document.getElementById("search");
+const sortSelect = document.getElementById("sort");
+
+function displayProducts(list) {
+    productDiv.innerHTML = "";
+
+    list.forEach((p, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+            <h4>${p.name}</h4>
+            <p>₹ ${p.price}</p>
+            <button onclick="addToCart(${i})">Add to Cart</button>
+        `;
+
+        productDiv.appendChild(div);
+    });
+}
+
+function addToCart(i) {
+    cart.push(products[i]);
+    updateCart();
+}
+
+function updateCart() {
+    cartDiv.innerHTML = "";
+    let total = 0;
+
+    cart.forEach(item => {
+        total += item.price;
+        cartDiv.innerHTML += `<p>${item.name} - ₹${item.price}</p>`;
+    });
+
+    totalSpan.innerText = total.toFixed(2);
+}
+
+function updateList() {
+    let filtered = products.filter(p =>
+        p.name.toLowerCase().includes(searchInput.value.toLowerCase())
+    );
+
+    if (sortSelect.value === "low") {
+        filtered.sort((a, b) => a.price - b.price);
+    } else if (sortSelect.value === "high") {
+        filtered.sort((a, b) => b.price - a.price);
+    }
+
+    displayProducts(filtered);
+}
+
+searchInput.addEventListener("input", updateList);
+sortSelect.addEventListener("change", updateList);
+
+function checkout() {
+    let total = 0;
+
+    cart.forEach(item => {
+        total += item.price;
+    });
+
+    document.getElementById("payAmount").innerText = total.toFixed(2);
+
+    const upiID = "9366225131@fam";
+    const link = `upi://pay?pa=${upiID}&pn=MLStore&am=${total.toFixed(2)}&cu=INR`;
+
+    document.getElementById("upiLink").href = link;
+
+    document.querySelector(".container").style.display = "none";
+    document.querySelector(".controls").style.display = "none";
+    document.querySelector(".cart").style.display = "none";
+    document.getElementById("paymentPage").classList.remove("hidden");
+}
+
+function goBack() {
+    document.querySelector(".container").style.display = "grid";
+    document.querySelector(".controls").style.display = "flex";
+    document.querySelector(".cart").style.display = "block";
+    document.getElementById("paymentPage").classList.add("hidden");
+}
+
+displayProducts(products);
+</script>
+
+</body>
+</html>
